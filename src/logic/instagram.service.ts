@@ -1,5 +1,6 @@
 import axios from "axios";
-import { InstagramUser } from "./models/instagramuser";
+import { InstagramUser } from "./models/instagramUser";
+import { Post } from "./models/post";
 
 export class InstagramService {
   constructor() {
@@ -30,5 +31,31 @@ export class InstagramService {
     const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${instagramId}&redirect_uri=${redirect_uri}&scope=user_profile,user_media&response_type=code`;
 
     window.location.replace(authUrl);
+  }
+
+  public async getPosts(user: InstagramUser): Promise<Array<Post>> {
+    const url =
+      "https://graph.instagram.com/me/media?fields=id,caption,media_url&access_token=";
+
+    const instaPosts = await axios
+      .get(url + user.token)
+      .then((result) => {
+        return result.data;
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+
+    console.log(instaPosts);
+
+    const posts: Array<Post> = [];
+
+    instaPosts.data.forEach((instaPost: any) => {
+      const post = new Post(instaPost.caption, instaPost.media_url);
+      posts.push(post);
+      user.posts.push(post);
+    });
+
+    return posts;
   }
 }
